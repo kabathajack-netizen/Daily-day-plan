@@ -45,7 +45,7 @@ li.t.exercise{border-left-color:var(--ex)}li.t.study{border-left-color:var(--st)
 .sh{background:var(--card);max-width:560px;margin:60px auto 0;border-radius:20px 20px 0 0;padding:18px 18px calc(24px + env(safe-area-inset-bottom,0px));min-height:100%}
 .sh h2{margin:0 0 12px;font-size:20px}
 label{display:block;font-size:13px;color:var(--mut);margin:12px 0 4px}
-input,select{width:100%;font-size:17px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);-webkit-appearance:none;appearance:none;min-height:46px}
+input,select,textarea{width:100%;font-size:17px;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);-webkit-appearance:none;appearance:none;min-height:46px}
 .row{display:flex}.row>div{-webkit-box-flex:1;-webkit-flex:1;flex:1}.row>div+div{margin-left:10px}
 .cats{display:flex;margin-top:4px}
 .cats button{-webkit-box-flex:1;-webkit-flex:1;flex:1;margin-right:6px;padding:10px 2px;border-radius:10px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font-size:14px}
@@ -69,12 +69,24 @@ input,select{width:100%;font-size:17px;padding:11px;border:1px solid var(--line)
 .pb p{margin:4px 0;font-size:15px}
 .dl{font-size:13px;margin-top:4px;line-height:1.35}
 .sm{font-size:14px;color:var(--mut)}
+textarea{min-height:90px;font-size:14px;word-break:break-all;font-family:monospace}
+.bt{display:flex;margin:12px 0 0}
+.bt .ib{-webkit-box-flex:1;-webkit-flex:1;flex:1;margin-right:6px;padding:10px 4px}
+.bt .ib:last-child{margin-right:0}
+.gr{display:flex;align-items:flex-end;height:120px;margin:10px 0 4px}
+.gc{-webkit-box-flex:1;-webkit-flex:1;flex:1;margin:0 2px;height:100%;display:flex;flex-direction:column;justify-content:flex-end;text-align:center;font-size:11px;color:var(--mut)}
+.gb{background:var(--acc);border-radius:4px 4px 0 0;min-height:3px;margin-bottom:3px}
+.big{font-size:30px;font-weight:800;line-height:1.1}
+.sg{display:flex;flex-wrap:wrap;margin:0 -5px}
+.sg>div{width:50%;padding:5px}
+.sg .pb{margin:0}
 </style>
 </head>
 <body>
 <div id="al"></div>
 <div id="app">
-  <div class="top"><div><h1 id="hi">Hello</h1><div class="dt" id="dt"></div></div><div><button class="ib" id="plb" style="margin-right:6px">Plans</button><button class="ib" id="gear">Settings</button></div></div>
+  <div class="top"><div><h1 id="hi">Hello</h1><div class="dt" id="dt"></div></div></div>
+  <div class="bt"><button class="ib" id="plb">Plans</button><button class="ib" id="prb">Progress</button><button class="ib" id="gear">Settings</button></div>
   <div class="prog"><div id="bar"></div></div><div id="pt"></div>
   <div id="week"></div>
   <div id="plan" class="plan" style="display:none"><p>Good morning. Plan your day: tap an idea or add your own.</p><div id="chips"></div></div>
@@ -103,12 +115,22 @@ input,select{width:100%;font-size:17px;padding:11px;border:1px solid var(--line)
   <button class="btn g" id="pl-close">Close</button>
 </div></div>
 
+<div class="ov" id="prog"><div class="sh">
+  <h2>My progress</h2>
+  <div id="pg-body"></div>
+  <button class="btn" id="pg-close">Close</button>
+</div></div>
+
 <div class="ov" id="set"><div class="sh">
   <h2>Settings</h2>
   <label>Morning “plan your day” reminder</label><input id="s-morn" type="time">
   <button class="btn g" id="s-notif">Allow phone notifications</button>
   <button class="btn g" id="s-test">Test a reminder</button>
   <p class="note" id="s-note"></p>
+  <label>Backup code (save it in Notes)</label>
+  <textarea id="s-code" placeholder="Tap Create backup code to see your code here. To restore, paste a code here, then tap Restore."></textarea>
+  <button class="btn g" id="s-bk">Create backup code</button>
+  <button class="btn g" id="s-rs">Restore from code</button>
   <button class="btn" id="s-close">Done</button>
 </div></div>
 
@@ -201,7 +223,7 @@ $('fab').onclick=function(){openAdd('');};
 $('f-save').onclick=addTask;
 $('f-cancel').onclick=function(){openSheet('sheet',false);};
 $('gear').onclick=function(){$('s-morn').value=S.morning;
- $('s-note').textContent='Reminders ring, beep and pop up while DayPlan is open on your screen. iPhones cannot run web apps in the background, so keep DayPlan open (or use Add to Home Screen) and set the screen to stay on. Your tasks are saved on this phone.';
+ $('s-note').textContent='Reminders ring, beep and pop up while DayPlan is open on your screen. iPhones cannot run web apps in the background, so keep DayPlan open (or use Add to Home Screen) and set the screen to stay on. Your tasks are saved on this phone. '+(navigator.serviceWorker&&navigator.serviceWorker.controller?'Offline mode is on.':'Offline mode switches on after you open the app once with internet and then reopen it.');
  $('s-notif').style.display=window.Notification?'block':'none';openSheet('set',true);};
 $('s-close').onclick=function(){S.morning=$('s-morn').value||'07:00';var d=key(new Date());delete S.fired['m|'+d];save();openSheet('set',false);render();};
 $('s-notif').onclick=function(){try{Notification.requestPermission(function(p){$('s-notif').textContent=p==='granted'?'Notifications allowed':'Notifications blocked';});}catch(e){}};
@@ -256,6 +278,36 @@ $('pl-close').onclick=function(){openSheet('plans',false);};
 $('pl-add').onclick=togglePlan;
 $('tb-ex').onclick=function(){tab='ex';renderPlans();};
 $('tb-di').onclick=function(){tab='di';renderPlans();};
+
+function dAgo(i){var t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate()-i);}
+function dayStat(d){var ts=forDay(d),n=ts.length,k=0,i;for(i=0;i<n;i++){if(isDone(ts[i],d))k++;}return {n:n,k:k,p:n?k/n:0};}
+function renderProg(){
+ var i,j,st,d,ts,tn=0,tk=0,w=0,wk=0,cats={exercise:0,study:0,chores:0,other:0},good=[],run=0,best=0,streak=0,bars='';
+ for(i=0;i<30;i++){d=dAgo(i);st=dayStat(d);tn+=st.n;tk+=st.k;if(i<7){w+=st.n;wk+=st.k;}
+  ts=forDay(d);for(j=0;j<ts.length;j++){if(isDone(ts[j],d))cats[ts[j].cat]++;}}
+ for(i=0;i<90;i++){st=dayStat(dAgo(i));good[i]=st.n>0&&st.p>=0.7;}
+ for(i=89;i>=0;i--){if(good[i]){run++;if(run>best)best=run;}else run=0;}
+ i=good[0]?0:1;while(i<90&&good[i]){streak++;i++;}
+ for(i=13;i>=0;i--){d=dAgo(i);st=dayStat(d);bars+='<div class="gc"><div class="gb" style="height:'+Math.round(st.p*90)+'px;'+(st.n?'':'opacity:.25')+'"></div>'+DN[d.getDay()].charAt(0)+'</div>';}
+ var pc=function(a,b){return b?Math.round(a/b*100)+'%':'–';};
+ $('pg-body').innerHTML='<div class="sg"><div><div class="pb"><div class="big">'+pc(wk,w)+'</div><div class="sm">done this week ('+wk+' of '+w+')</div></div></div><div><div class="pb"><div class="big">'+pc(tk,tn)+'</div><div class="sm">done in 30 days ('+tk+' of '+tn+')</div></div></div><div><div class="pb"><div class="big">'+streak+'</div><div class="sm">day streak</div></div></div><div><div class="pb"><div class="big">'+best+'</div><div class="sm">best streak</div></div></div></div>'
+ +'<div class="pb" style="margin-top:10px"><h3>Last 14 days</h3><div class="gr">'+bars+'</div><p class="sm">Bar height is the share of that day’s tasks you finished. A day counts toward your streak when you finish at least 70%.</p></div>'
+ +'<div class="pb"><h3>Finished in the last 30 days</h3><p>Exercise: <b>'+cats.exercise+'</b> · Study: <b>'+cats.study+'</b> · Chores: <b>'+cats.chores+'</b> · Other: <b>'+cats.other+'</b></p></div>';
+}
+function enc(o){return btoa(unescape(encodeURIComponent(JSON.stringify(o))));}
+function dec(c){return JSON.parse(decodeURIComponent(escape(atob(c.replace(/\s+/g,'')))));}
+$('prb').onclick=function(){renderProg();openSheet('prog',true);};
+$('pg-close').onclick=function(){openSheet('prog',false);};
+$('s-bk').onclick=function(){var ta=$('s-code'),ok=false;ta.value='DP1:'+enc(S);ta.focus();ta.select();try{ta.setSelectionRange(0,ta.value.length);}catch(e){}
+ try{ok=document.execCommand('copy');}catch(e){}
+ alert(ok?'Backup code copied. Paste it into Notes.':'Press and hold the code, tap Select All, then Copy. Paste it into Notes.');};
+$('s-rs').onclick=function(){var c=$('s-code').value.replace(/^\s+|\s+$/g,''),o;
+ if(c.indexOf('DP1:')!==0){alert('Paste a backup code that starts with DP1: first.');return;}
+ try{o=dec(c.slice(4));}catch(e){o=null;}
+ if(!o||!o.tasks||typeof o.morning!=='string'){alert('That backup code is not valid. Check that you copied all of it.');return;}
+ if(!confirm('Replace everything in the app with this backup?'))return;
+ S=o;if(!S.fired)S.fired={};S.seeded=1;save();$('s-code').value='';openSheet('set',false);render();alert('Backup restored.');};
+try{if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(function(){});}}catch(e){}
 load();if(!S.seeded){seedPlan();S.seeded=1;save();}render();tick();setInterval(tick,15000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)tick();});
 })();
